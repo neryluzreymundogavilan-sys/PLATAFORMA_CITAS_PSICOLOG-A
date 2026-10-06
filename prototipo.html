@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma de Citas y Atención al Alumno - IESTP Manuel Scorza Torre</title>
+  <!-- Tailwind CSS Dev CDN -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .nav-link.active {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .badge-presencial { background-color: #dbeafe; color: #1e40af; }
+    .badge-virtual { background-color: #f3e8ff; color: #6b21a8; }
+    .badge-pendiente { background-color: #fef3c7; color: #92400e; }
+    .badge-confirmada { background-color: #e0e7ff; color: #3730a3; }
+    .badge-atendida { background-color: #d1fae5; color: #065f46; }
+    .badge-cancelada { background-color: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER / INSTITUTIONAL BAR -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+      <!-- Logo & Title -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="showView('view-dashboard')">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-2xl shadow-md">🧠</div>
+        <div>
+          <h1 class="font-bold text-base tracking-wide leading-tight text-white">IESTP Manuel Scorza Torre</h1>
+          <p class="text-xs text-indigo-300">Consultorio de Psicología & Atención al Alumno • Acobamba</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 overflow-x-auto py-1 text-xs">
+        <button onclick="showView('view-dashboard')" id="nav-dashboard" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800 active">📊 Dashboard</button>
+        <button onclick="showView('view-reserva')" id="nav-reserva" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800">📅 Reserva tu Cita</button>
+        <button onclick="showView('view-alumnos')" id="nav-alumnos" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800">👥 Alumnos (CRUD 1)</button>
+        <button onclick="showView('view-citas')" id="nav-citas" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800">🩺 Citas & Agenda (CRUD 2)</button>
+        <button onclick="showView('view-historia')" id="nav-historia" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800">📋 Historia Clínica</button>
+        <button onclick="showView('view-reportes')" id="nav-reportes" class="nav-link px-3 py-1.5 rounded-lg transition hover:bg-slate-800">📈 Reportes</button>
+      </nav>
+
+      <!-- Auth Action & User Badge -->
+      <div class="flex items-center space-x-2 text-xs">
+        <div id="user-info-badge" class="hidden sm:flex flex-col text-right">
+          <span id="current-user-email" class="font-semibold text-indigo-200">admin.psicologia@scorza.edu.pe</span>
+          <span id="current-user-role" class="text-[10px] text-green-400 font-bold uppercase">Rol: Administrador</span>
+        </div>
+        <button id="btn-auth-toggle" onclick="toggleAuthModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded-lg shadow text-xs transition flex items-center space-x-1">
+          <span>🔐 Acceso / Login</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto p-4 sm:p-6 flex-grow w-full">
+
+    <!-- ALERTA GLOBAL / TOAST -->
+    <div id="global-toast" class="hidden mb-4 p-4 rounded-xl text-xs font-medium border shadow-sm flex items-center justify-between transition-all">
+      <span id="toast-message">Mensaje del sistema</span>
+      <button onclick="closeToast()" class="text-lg font-bold ml-3">&times;</button>
+    </div>
+
+    <!-- VIEW 1: DASHBOARD PRINCIPAL -->
+    <section id="view-dashboard" class="space-y-6">
+      <div class="flex justify-between items-center flex-wrap gap-2 border-b border-gray-200 pb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Panel Principal de Control</h2>
+          <p class="text-xs text-gray-500">Resumen operativo de atenciones psicopedagógicas del IESTP Manuel Scorza Torre</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full font-semibold border border-emerald-300">● Servidor API REST Conectado</span>
+          <button onclick="showView('view-reserva')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow transition">+ Nueva Reserva</button>
+        </div>
+      </div>
+
+      <!-- KPI Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Citas del Mes</span>
+            <span class="p-2 bg-indigo-50 text-indigo-600 rounded-xl text-lg">📅</span>
+          </div>
+          <p class="text-3xl font-extrabold text-indigo-900" id="dash-kpi-citas">42</p>
+          <p class="text-xs text-emerald-600 font-semibold mt-1">↑ +15% incremento vs mes anterior</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atenciones Hoy</span>
+            <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-lg">🩺</span>
+          </div>
+          <p class="text-3xl font-extrabold text-emerald-800" id="dash-kpi-hoy">6</p>
+          <p class="text-xs text-gray-500 mt-1">4 Presenciales / 2 Virtuales</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Alumnos Registrados</span>
+            <span class="p-2 bg-blue-50 text-blue-600 rounded-xl text-lg">🎓</span>
+          </div>
+          <p class="text-3xl font-extrabold text-blue-900" id="dash-kpi-alumnos">184</p>
+          <p class="text-xs text-blue-600 font-medium mt-1">APSTI, Enfermería, Mecánica</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition">
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pendientes Diagnóstico</span>
+            <span class="p-2 bg-amber-50 text-amber-600 rounded-xl text-lg">⏳</span>
+          </div>
+          <p class="text-3xl font-extrabold text-amber-700" id="dash-kpi-pendientes">3</p>
+          <p class="text-xs text-amber-600 font-semibold mt-1">Historias Clínicas abiertas</p>
+        </div>
+      </div>
+
+      <!-- Agenda del Día Table -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <h3 class="font-bold text-base text-gray-900">Agenda del Día (29 de Setiembre de 2026)</h3>
+          <span class="text-xs text-gray-400">Consultorio 01 - Pabellón A</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-100 text-gray-700 font-semibold uppercase tracking-wider">
+              <tr>
+                <th class="p-3 rounded-l-lg">Código Cita</th>
+                <th class="p-3">Estudiante / Alumno</th>
+                <th class="p-3">Carrera Profesional</th>
+                <th class="p-3">Horario</th>
+                <th class="p-3">Modalidad</th>
+                <th class="p-3">Estado</th>
+                <th class="p-3 text-right rounded-r-lg">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="table-dashboard-citas" class="divide-y divide-gray-100">
+              <!-- Renderizado dinámico desde app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: RESERVA DE CITAS (ALUMNO) -->
+    <section id="view-reserva" class="hidden space-y-6 max-w-3xl mx-auto">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+        <div class="text-center mb-6">
+          <div class="w-14 h-14 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center text-2xl mx-auto mb-2 font-bold">📅</div>
+          <h2 class="text-2xl font-bold text-gray-900">Reserva de Cita Psicológica</h2>
+          <p class="text-xs text-gray-500 mt-1">Complete la información requerida para programar su atención profesional confidencial.</p>
+        </div>
+
+        <form id="form-reserva-cita" onsubmit="handleReservaSubmit(event)" class="space-y-5">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Especialidad Requerida *</label>
+            <select id="reserva-especialidad" class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+              <option value="1">Psicología Educativa y Psicopedagogía</option>
+              <option value="2">Orientación Vocacional y Profesional</option>
+              <option value="3">Psicología Clínica y Emocional</option>
+              <option value="4">Intervención en Crisis y Apoyo Social</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Especialista / Psicólogo *</label>
+            <select id="reserva-psicologo" class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+              <option value="1">Lic. José Gabriel Quispe Anyaipoma (Consultorio 01)</option>
+              <option value="2">Dra. María Elena Romero Ccanto (Consultorio 02)</option>
+              <option value="3">Lic. Karin Lisbeth Vílchez Torrealva (Consultorio 03)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha de Atención *</label>
+              <input type="date" id="reserva-fecha" value="2026-10-15" min="2026-09-01" class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 mb-1">Bloque Horario Disponible *</label>
+              <select id="reserva-hora" class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+                <option value="08:00:00">08:00 AM - 09:00 AM</option>
+                <option value="09:00:00" selected>09:00 AM - 10:00 AM</option>
+                <option value="10:00:00">10:00 AM - 11:00 AM</option>
+                <option value="11:00:00">11:00 AM - 12:00 PM</option>
+                <option value="14:00:00">02:00 PM - 03:00 PM</option>
+                <option value="15:00:00">03:00 PM - 04:00 PM</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Modalidad de Cita *</label>
+            <div class="flex space-x-6 text-xs bg-gray-50 p-3 rounded-xl border border-gray-200">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="modalidad" value="Presencial" checked class="text-indigo-600 focus:ring-indigo-500">
+                <span>🏢 Presencial (Consultorio IESTP)</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="radio" name="modalidad" value="Virtual" class="text-indigo-600 focus:ring-indigo-500">
+                <span>💻 Virtual (Google Meet)</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Motivo Principal de la Consulta *</label>
+            <textarea id="reserva-motivo" rows="3" placeholder="Describa brevemente el motivo de su solicitud..." class="w-full p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>Estrés acumulado por evaluación de entregables finales y organización de horarios de examen.</textarea>
+          </div>
+
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-xs shadow-md transition">
+            Confirmar Reserva de Cita
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- VIEW 3: GESTIÓN DE ALUMNOS (CRUD 1 CORE) -->
+    <section id="view-alumnos" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex justify-between items-center flex-wrap gap-3 mb-5 border-b pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Módulo de Gestión de Alumnos (CRUD 1)</h2>
+            <p class="text-xs text-gray-500">Directorio oficial de estudiantes matriculados en el IESTP Manuel Scorza Torre</p>
+          </div>
+          <button onclick="openModalNuevoAlumno()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow transition">+ Registrar Nuevo Alumno</button>
+        </div>
+
+        <!-- Filters Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <input type="text" id="filter-alumno-buscar" oninput="renderAlumnosTable()" placeholder="🔍 Buscar por DNI, Nombres o Código..." class="p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+          <select id="filter-alumno-carrera" onchange="renderAlumnosTable()" class="p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="Todas">Todas las Carreras Profesionales</option>
+            <option value="Arquitectura de Plataformas TI">Arquitectura de Plataformas TI</option>
+            <option value="Enfermería Técnica">Enfermería Técnica</option>
+            <option value="Mecánica Automotriz">Mecánica Automotriz</option>
+          </select>
+          <select id="filter-alumno-semestre" onchange="renderAlumnosTable()" class="p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="Todos">Todos los Semestres</option>
+            <option value="IV Semestre">IV Semestre</option>
+            <option value="II Semestre">II Semestre</option>
+            <option value="VI Semestre">VI Semestre</option>
+          </select>
+        </div>
+
+        <!-- Alumnos Data Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-100 text-gray-700 font-semibold uppercase tracking-wider">
+              <tr>
+                <th class="p-3 rounded-l-lg">Código</th>
+                <th class="p-3">DNI</th>
+                <th class="p-3">Estudiante</th>
+                <th class="p-3">Carrera Profesional</th>
+                <th class="p-3">Semestre</th>
+                <th class="p-3">Teléfono</th>
+                <th class="p-3 text-center rounded-r-lg">Acciones (CRUD)</th>
+              </tr>
+            </thead>
+            <tbody id="table-alumnos-body" class="divide-y divide-gray-100">
+              <!-- Renderizado dinámico desde app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: GESTIÓN DE CITAS Y AGENDA (CRUD 2 CORE) -->
+    <section id="view-citas" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div class="flex justify-between items-center flex-wrap gap-3 mb-5 border-b pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Módulo de Gestión de Citas & Agenda (CRUD 2)</h2>
+            <p class="text-xs text-gray-500">Control de programación horaria y seguimiento del estado de atenciones</p>
+          </div>
+          <button onclick="showView('view-reserva')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow transition">+ Reservar Cita</button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+          <select id="filter-cita-estado" onchange="renderCitasTable()" class="p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="Todos">Todos los Estados</option>
+            <option value="Pendiente">Pendientes</option>
+            <option value="Confirmada">Confirmadas</option>
+            <option value="Atendida">Atendidas</option>
+            <option value="Cancelada">Canceladas</option>
+          </select>
+          <input type="text" id="filter-cita-buscar" oninput="renderCitasTable()" placeholder="🔍 Buscar por código cita, alumno o psicólogo..." class="p-2.5 border rounded-xl text-xs bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <!-- Citas Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-100 text-gray-700 font-semibold uppercase tracking-wider">
+              <tr>
+                <th class="p-3 rounded-l-lg">Código</th>
+                <th class="p-3">Alumno</th>
+                <th class="p-3">Psicólogo Asignado</th>
+                <th class="p-3">Fecha / Hora</th>
+                <th class="p-3">Modalidad</th>
+                <th class="p-3">Estado</th>
+                <th class="p-3 text-center rounded-r-lg">Acciones (CRUD)</th>
+              </tr>
+            </thead>
+            <tbody id="table-citas-body" class="divide-y divide-gray-100">
+              <!-- Renderizado dinámico desde app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: HISTORIA CLÍNICA PSICOPEDAGÓGICA -->
+    <section id="view-historia" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+        <div class="flex justify-between items-center border-b pb-4 mb-6 flex-wrap gap-2">
+          <div>
+            <span class="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-bold">EXPEDIENTE N° HC-2026-0001</span>
+            <h2 class="text-2xl font-bold text-gray-900 mt-1">Historia Clínica Psicopedagógica</h2>
+          </div>
+          <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-xl shadow transition">🖨️ Imprimir Expediente (PDF)</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-gray-50 p-4 rounded-xl border mb-6">
+          <div><span class="font-bold text-gray-500">Alumno:</span> Katty Maribel Huaman Acho</div>
+          <div><span class="font-bold text-gray-500">DNI / Código:</span> 73456128 / APSTI-2024-001</div>
+          <div><span class="font-bold text-gray-500">Carrera:</span> Arquitectura de Plataformas TI</div>
+          <div><span class="font-bold text-gray-500">Semestre / Sexo:</span> IV Semestre / Femenino</div>
+          <div><span class="font-bold text-gray-500">Fecha Apertura:</span> 10/09/2026</div>
+          <div><span class="font-bold text-gray-500">Psicólogo Asignado:</span> Lic. José Gabriel Quispe</div>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <h3 class="font-bold text-sm text-indigo-900">Sesión N° 01 - Registro de Atención (15/09/2026)</h3>
+          <div>
+            <label class="font-bold block text-gray-700 mb-1">Diagnóstico Presuntivo (CIE-10 / DSM-5):</label>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl font-medium text-amber-900">
+              F43.0 - Reacción al estrés agudo secundario a sobrecarga de actividades académicas en entregables finales.
+            </div>
+          </div>
+          <div>
+            <label class="font-bold block text-gray-700 mb-1">Evaluación Psicológica & Observaciones de Conducta:</label>
+            <p class="p-3 border rounded-xl bg-gray-50">Paciente orientada en tiempo, espacio y persona. Manifiesta tensión muscular leve, preocupación por cumplimiento de fechas límite y cansancio recurrente.</p>
+          </div>
+          <div>
+            <label class="font-bold block text-gray-700 mb-1">Plan de Intervención Recomendado:</label>
+            <p class="p-3 border rounded-xl bg-gray-50">1. Entrenamiento en respiración diafragmática (10 min/día).<br>2. Aplicación de la matriz de Eisenhower para priorización de tareas.<br>3. Higiene del sueño (mínimo 7 horas consecutivas nocturnas).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: REPORTES & ESTADÍSTICAS -->
+    <section id="view-reportes" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Módulo de Reportes y Estadísticas de Atención</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 border rounded-2xl bg-gray-50">
+            <h3 class="font-bold text-sm mb-4">Demanda de Atención por Carrera Profesional</h3>
+            <div class="space-y-3 text-xs">
+              <div>
+                <div class="flex justify-between mb-1"><span>Arquitectura de Plataformas TI</span><span class="font-bold">55% (23 citas)</span></div>
+                <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden"><div class="bg-indigo-600 h-2.5 rounded-full" style="width: 55%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>Enfermería Técnica</span><span class="font-bold">30% (13 citas)</span></div>
+                <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden"><div class="bg-blue-500 h-2.5 rounded-full" style="width: 30%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span>Mecánica Automotriz</span><span class="font-bold">15% (6 citas)</span></div>
+                <div class="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden"><div class="bg-emerald-500 h-2.5 rounded-full" style="width: 15%"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 border rounded-2xl bg-gray-50">
+            <h3 class="font-bold text-sm mb-4">Estado General de Citas Programadas</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between p-3 bg-white border rounded-xl"><span>Citas Atendidas Satisfactoriamente:</span><span class="font-bold text-emerald-600">32</span></div>
+              <div class="flex justify-between p-3 bg-white border rounded-xl"><span>Citas Confirmadas Pendientes:</span><span class="font-bold text-indigo-600">8</span></div>
+              <div class="flex justify-between p-3 bg-white border rounded-xl"><span>Cancelaciones / Inasistencias:</span><span class="font-bold text-red-600">2</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: REGISTRAR NUEVO ALUMNO -->
+  <div id="modal-alumno" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-gray-900" id="modal-alumno-title">Registrar Nuevo Alumno</h3>
+        <button onclick="closeModalAlumno()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form id="form-modal-alumno" onsubmit="handleGuardarAlumno(event)" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-alumno-id">
+        <div>
+          <label class="block font-semibold mb-1">DNI (8 dígitos) *</label>
+          <input type="text" id="modal-alumno-dni" maxlength="8" class="w-full p-2 border rounded-lg bg-gray-50" required>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Código Estudiantil *</label>
+          <input type="text" id="modal-alumno-codigo" placeholder="APSTI-2024-00X" class="w-full p-2 border rounded-lg bg-gray-50" required>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Nombres Completos *</label>
+          <input type="text" id="modal-alumno-nombres" class="w-full p-2 border rounded-lg bg-gray-50" required>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Apellidos *</label>
+          <input type="text" id="modal-alumno-apellidos" class="w-full p-2 border rounded-lg bg-gray-50" required>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Carrera Profesional *</label>
+          <select id="modal-alumno-carrera" class="w-full p-2 border rounded-lg bg-gray-50" required>
+            <option value="Arquitectura de Plataformas TI">Arquitectura de Plataformas TI</option>
+            <option value="Enfermería Técnica">Enfermería Técnica</option>
+            <option value="Mecánica Automotriz">Mecánica Automotriz</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Semestre *</label>
+          <select id="modal-alumno-semestre" class="w-full p-2 border rounded-lg bg-gray-50" required>
+            <option value="I Semestre">I Semestre</option>
+            <option value="II Semestre">II Semestre</option>
+            <option value="IV Semestre" selected>IV Semestre</option>
+            <option value="VI Semestre">VI Semestre</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Teléfono *</label>
+          <input type="text" id="modal-alumno-telefono" placeholder="967890123" class="w-full p-2 border rounded-lg bg-gray-50" required>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t">
+          <button type="button" onclick="closeModalAlumno()" class="px-4 py-2 border rounded-lg text-gray-600">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold">Guardar Alumno</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LOGIN / AUTENTICACIÓN -->
+  <div id="modal-auth" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border">
+      <div class="bg-slate-900 p-6 text-center text-white">
+        <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center text-2xl mx-auto mb-2 font-bold shadow-md">🏥</div>
+        <h3 class="font-bold text-lg">Acceso al Consultorio Psicológico</h3>
+        <p class="text-xs text-indigo-300">IESTP Manuel Scorza Torre • Acobamba</p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Correo Institucional *</label>
+          <input type="email" id="login-email" value="admin.psicologia@scorza.edu.pe" class="w-full p-2.5 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Contraseña *</label>
+          <input type="password" id="login-password" value="Password123!" class="w-full p-2.5 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none" required>
+        </div>
+        <div>
+          <label class="block font-semibold text-gray-700 mb-1">Rol de Acceso *</label>
+          <select id="login-role" class="w-full p-2.5 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="Administrador">Administrador del Sistema</option>
+            <option value="Psicólogo">Psicólogo / Especialista</option>
+            <option value="Alumno">Alumno / Estudiante</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow transition text-xs">
+          Iniciar Sesión Seguro
+        </button>
+
+        <div class="pt-3 border-t text-center space-y-1">
+          <p class="text-[11px] text-gray-400">Demostración Rápida por Rol:</p>
+          <div class="flex justify-center space-x-2">
+            <button type="button" onclick="setDemoUser('admin')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-[10px]">Admin</button>
+            <button type="button" onclick="setDemoUser('psico')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-[10px]">Psicólogo</button>
+            <button type="button" onclick="setDemoUser('alumno')" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-[10px]">Alumno</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-gray-200 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400">
+      <p>© 2026 Consultorio de Psicología - IESTP Manuel Scorza Torre (Acobamba, Huancavelica)</p>
+      <p class="mt-1">Desarrollado por: <span class="font-semibold text-gray-600">Katty Maribel Huaman Acho & Nery Luz Reymundo Gavilan</span></p>
+    </div>
+  </footer>
+
+  <!-- APPLICATIVE JAVASCRIPT LOGIC -->
+  <script src="app.js"></script>
+</body>
+</html>
